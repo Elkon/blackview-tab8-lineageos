@@ -49,3 +49,19 @@ cp splloader.bin spl.bin && ./gen_spl-unlock-legacy spl.bin     # -> spl-unlock.
 
 Il `.pac` non è incluso nel repo (3,6 GB, firmware di proprietà Blackview): è nelle Releases come
 pacchetto di recupero, oppure si cerca altrove.
+
+## Provenienza e diritti
+
+| file | origine | diritti |
+|---|---|---|
+| `fdl1-dl.bin`, `spl-unlock.bin` | **generati** dal nostro firmware con i generatori di TomKing062 | nostri (MIT) |
+| `fdl2-dl.bin`, `fdl2-cboot.bin`, `misc-wipe.bin` | dal pacchetto **`sc9863a_Itel_Vision_3`** di TomKing062 (Releases del suo progetto) | suoi: **non sono coperti da una licenza esplicita**. Se preferisci, scaricali da lì invece di usare i nostri |
+| `vbmeta*.img` | estratte dal firmware Blackview | Blackview |
+
+Il progetto [TomKing062/CVE-2022-38694_unlock_bootloader](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader)
+**non dichiara una licenza**: il merito del metodo e degli FDL patchati è interamente suo, e questo
+repo non rivendica nulla su quel lavoro. Il codice di `spd_dump` che usiamo deriva da
+[ilyakurdyukov/spreadtrum_flash](https://github.com/ilyakurdyukov/spreadtrum_flash) (Unlicense).
+
+Se sei TomKing062 e preferisci che il kit **non** contenga quei tre file, apri una issue: tolgo gli FDL
+e il wizard ti manderà a scaricarli dal tuo repository.
