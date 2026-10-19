@@ -18,9 +18,14 @@ scompattata.
 
 | | |
 |---|---|
-| file | `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac` (3,6 GB) |
-| sha256 | `e0531f310597b4bd4ee0bad232640a4eecfc2c11a2776d27ee955df3c6d30d8c` |
+| asset della Release | `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz` (1,9 GB) |
+| sha256 del `.gz` | `0f7dd60dd51f22f0c4e7099393d698676d703327fe3f3eb6ac676ca61524b362` |
+| sha256 del `.pac` scompattato | `e0531f310597b4bd4ee0bad232640a4eecfc2c11a2776d27ee955df3c6d30d8c` |
 | board dichiarata | `s9863a1h10`, la stessa del tablet |
+
+Si ottiene con `gunzip DK_....pac.gz` (3,6 GB scompattati). È una **copia specchio** di un firmware
+Blackview già distribuito pubblicamente: se sei il titolare dei diritti e vuoi la rimozione, apri una
+issue.
 
 ## Kit di sblocco
 

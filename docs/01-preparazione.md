@@ -48,7 +48,7 @@ L'installer li scarica da solo (`./install.sh check`), verificando gli sha256 di
 | file | dove | perché |
 |---|---|---|
 | **GSI LineageOS 20** `lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img.gz` | [SourceForge — Andy Yan](https://sourceforge.net/projects/andyyan-gsi/files/lineage-20-td/) | il sistema che si installa |
-| **Firmware stock** `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac` | [GitHub Releases di questo repo](https://github.com/Elkon/blackview-tab8-lineageos/releases) | rete di sicurezza + FDL + `vbmeta` |
+| **Firmware stock** `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz` (1,9 GB) | [GitHub Releases di questo repo](https://github.com/Elkon/blackview-tab8-lineageos/releases) | rete di sicurezza + FDL + `vbmeta`; si scompatta con `gunzip` (3,6 GB) |
 | **Kit di sblocco** (`unlock-kit.tar.gz`) | [GitHub Releases di questo repo](https://github.com/Elkon/blackview-tab8-lineageos/releases) | i pezzi per sbloccare |
 
 > Il `.pac` è **NEU 2020**, mentre il tablet monta la build **EEA 2021**: per la rete di sicurezza va
