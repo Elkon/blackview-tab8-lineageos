@@ -15,7 +15,7 @@ The tablet has it. `adb reboot fastboot`, then `fastboot getvar is-userspace` an
 `super` is 4.00 GB. Inside it `system` is 1.49 GB, `product` 1.48 GB, `vendor` 0.39 GB, which leaves
 about 650 MB free.
 
-The GSI is 2.2 GB, so it does not fit until `product` is gone. The stock product partition is useless
+The GSI is 2.4 GB, so it does not fit until `product` is gone. The stock product partition is useless
 to a GSI anyway. Without that step fastboot answers `Not enough space to resize partition`.
 
 ## The sequence

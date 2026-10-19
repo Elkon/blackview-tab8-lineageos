@@ -5,7 +5,7 @@ from the actual files when the release was made, not typed by hand.
 
 ## GSI
 
-`lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img`, 2.2 GB, uncompressed.
+`lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img`, 2.4 GB, uncompressed.
 
     3b5ad7fc32bc59321a936f001d427602bc6942dbe4338238618f8d916375ef6e
 
