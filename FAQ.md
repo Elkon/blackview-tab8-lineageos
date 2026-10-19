@@ -1,114 +1,82 @@
-# FAQ — the five traps
+# FAQ
 
-These are the places where people actually get stuck. We paid for each one.
+Five places where this goes wrong and the fix is not obvious.
 
----
+## spd_dump waits on "Waiting for dl_diag connection" forever
 
-## 1. `spd_dump` sits forever on "Waiting for dl_diag connection"
+The tablet is plugged in and the device node has the right permissions, and nothing happens.
 
-**Even though the tablet is plugged in and the USB node has the right permissions.**
+spd_dump uses libusb hotplug, which on Linux listens for udevd events. If udevd is not running, in a
+container for example or on a minimal system with read-only /sys, the program waits forever.
 
-It is not the tablet: `spd_dump` relies on **libusb hotplug**, which on Linux listens for **udevd**
-events. If `udevd` is not running (containers, minimal systems, read-only `/sys`) the program waits
-forever.
+`systemctl is-active systemd-udevd` tells you. If it is not active, `sudo systemctl start
+systemd-udevd`, or start the daemon directly if systemd skips it because of an unmet condition:
 
-Check:
+    sudo nohup /lib/systemd/systemd-udevd &
 
-```
-systemctl is-active systemd-udevd
-```
+## LIBUSB_ERROR_BUSY
 
-If it is not active:
+The tablet has one USB interface. Either another program holds it or the tool opened it twice.
 
-```
-sudo systemctl start systemd-udevd
-# or, if systemd skips it because of an unmet condition:
-sudo nohup /lib/systemd/systemd-udevd &
-```
+Another program is the common case: `sudo pkill -x spd_dump` and `adb kill-server`, then run
+spd_dump alone. Two spd_dump processes never work at the same time.
 
-Related symptom, same family: `libusb_claim_interface failed : LIBUSB_ERROR_BUSY`.
+The tool doing it to itself was a bug in some builds, where the device got opened twice and the
+second claim collided with the first. Updating spd_dump to the latest build of TomKing062's fork
+avoids it.
 
----
+## The unlock step reports failure and it worked
 
-## 2. `LIBUSB_ERROR_BUSY` when claiming the interface
+You see this:
 
-The tablet has a **single** USB interface: either another program holds it, or the tool itself does.
+    usb_recv failed : LIBUSB_ERROR_TIMEOUT
+    CHECK_BAUD FAIL
+    usb_send failed : LIBUSB_ERROR_TIMEOUT
 
-- **Another program**: `sudo pkill -x spd_dump`, and stop `adb` (`adb kill-server`) before running
-  `spd_dump`. Two `spd_dump` processes never work together.
-- **The tool itself**: some versions open the device twice and the second claim collides with the
-  first. If that happens, update `spd_dump` to the latest build of TomKing062's fork.
+The patched SPL does not answer the PC. It runs, boots the patched uboot, and that writes the unlock
+record. The tool gets silence and looks broken.
 
----
+Read `miscdata` to find out which it is:
 
-## 3. `install.sh unlock` says the SPL step failed (but it worked)
+    spd_dump ... read_part miscdata 8192 64 m_after.bin
 
-The output contains:
+All zeros means not unlocked, do it again. Thirty-two bytes plus two 16-byte hashes means unlocked.
 
-```
-usb_recv failed : LIBUSB_ERROR_TIMEOUT
-CHECK_BAUD FAIL
-usb_send failed : LIBUSB_ERROR_TIMEOUT
-```
+## fastboot erase answers "Erasing failed"
 
-**This is expected.** `spl-unlock.bin` does not wait for the PC: it runs, loads the patched `uboot`,
-and that writes the unlock data. The tool gets no answer and looks dead.
+`erase` is not implemented for `userdata`, `metadata` and `misc` on this bootloader. Flash zeros over
+them instead:
 
-The real proof is the `miscdata` check:
+    dd if=/dev/zero of=misc-zero.img bs=1M count=1
+    fastboot flash misc misc-zero.img
 
-```
-spd_dump ... read_part miscdata 8192 64 m_after.bin
-```
+`userdata` is wiped from recovery, or from download mode with `./install.sh wipe`.
 
-- 64 bytes **all zero** → not unlocked, repeat the step.
-- 32 bytes + 16 + 16 → **unlocked**.
+## It stays on the Blackview logo
 
-Do not "fix" that timeout: it is not an error.
+Most likely, in this order:
 
----
+`misc` still carries `boot-fastboot`, so the tablet never tries Android. Zero `misc`.
 
-## 4. `fastboot erase` answers `Erasing failed`
+`product` was not recreated. The vendor fstab mounts it and init does not get to the end.
+`fastboot create-logical-partition product 0x4000000` and flash the empty ext4 into it.
 
-This bootloader does not implement `erase` for `userdata`, `metadata` and `misc`. Work around it by
-**flashing an image** of zeros over them:
+The GSI is the Android 14 one. Android 14 does not boot on this vendor, with or without AVB.
 
-```
-# misc (1 MB) — needed to clear the "boot-fastboot" command so Android boots again
-dd if=/dev/zero of=misc-zero.img bs=1M count=1
-fastboot flash misc misc-zero.img
-```
+The data was never wiped, so Android 10's userdata cannot be mounted by Android 13.
 
-For `userdata` the wipe is done from recovery (Wipe data/factory reset) or from the tool in download
-mode (it writes the wipe command into `misc` and erases `metadata`).
+The bootloader log says where it stopped:
 
----
+    spd_dump ... read_part uboot_log 0 0x400000 uboot_log.bin
+    strings uboot_log.bin | grep -E "veritymode|enter mode|Error"
 
-## 5. After flashing it stays on the Blackview logo (bootloop)
+## adb does not see the tablet
 
-In order of likelihood:
+In download mode it is not an Android device, so adb cannot see it and that is normal.
 
-1. **`misc` still contains `boot-fastboot`** → the tablet does not even try to boot Android. Zero
-   `misc` (see point 4).
-2. **`product` was not recreated** → the vendor fstab mounts it and init never finishes.
-   `fastboot create-logical-partition product 0x4000000` + `flash product` with an empty ext4.
-3. **Wrong GSI**: **Android 14 does not boot** on this vendor. You need the **20 (Android 13)**,
-   `arm64_bvN-vndklite`. With A14 the loop happens even with AVB fully disabled — do not waste days.
-4. **Old data**: if you never wiped, Android 10's `userdata` cannot be mounted by Android 13.
+LineageOS does not put a serial number on the USB descriptor. A udev rule keyed on the serial, which
+works on stock, stops matching. Use the VID rules from
+[docs/01-preparation.md](docs/01-preparation.md).
 
-To find out *where* it stops, read the bootloader log:
-
-```
-spd_dump ... read_part uboot_log 0 0x400000 uboot_log.bin
-strings uboot_log.bin | grep -E "veritymode|enter mode|Error"
-```
-
----
-
-## Extra: `adb` does not see the tablet (or "no permissions")
-
-- In **download** mode the tablet is not an Android device: `adb` cannot see it, that is normal.
-- After installing LineageOS it **does not expose a serial over USB**: a udev rule keyed on the serial
-  no longer matches. Use VID-based rules (`1782` and `18d1`, see
-  [`01-preparation.md`](01-preparation.md)).
-- `user X is not in the plugdev group` is adb's generic message when it cannot open the node: almost
-  always udev permissions, not the group.
+`user X is not in the plugdev group` is what adb prints whenever it cannot open the node. It is
+almost always udev permissions, not the group.

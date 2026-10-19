@@ -1,68 +1,60 @@
 # Preparation
 
-## 1. Tools on the PC (Debian/Ubuntu)
+## Tools
 
-```
-sudo apt install -y adb fastboot build-essential libusb-1.0-0-dev libxml2-dev pkg-config unzip e2fsprogs
-```
+Debian or Ubuntu:
 
-You also need **`spd_dump`**, the program that talks to the BootROM. It is not packaged: build it from
-TomKing062's fork (the one that speaks this SoC's protocol):
+    sudo apt install -y adb fastboot build-essential libusb-1.0-0-dev libxml2-dev pkg-config unzip e2fsprogs
 
-```
-git clone --recursive https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader.git
-cd CVE-2022-38694_unlock_bootloader/spreadtrum_flash && make
-```
+`spd_dump` talks to the BootROM and is not packaged. Build it from TomKing062's fork, which speaks
+this SoC's protocol:
 
-The binary is `spreadtrum_flash/spd_dump`. Put it in your `PATH` or set `SPD_DUMP=/path/to/spd_dump`.
+    git clone --recursive https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader.git
+    cd CVE-2022-38694_unlock_bootloader/spreadtrum_flash && make
 
-## 2. USB permissions
+The binary is `spreadtrum_flash/spd_dump`. Leave it in `PATH` or set `SPD_DUMP=/path/to/spd_dump`.
 
-Without udev rules, `adb`, `fastboot` and `spd_dump` cannot open the tablet. Create
+## USB permissions
+
+Without udev rules adb, fastboot and spd_dump cannot open the device. Write
 `/etc/udev/rules.d/51-bvtab8.rules`:
 
-```
-SUBSYSTEM=="usb", ATTR{idVendor}=="1782", MODE="0666"
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666"
-```
+    SUBSYSTEM=="usb", ATTR{idVendor}=="1782", MODE="0666"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666"
 
-Then:
+then
 
-```
-sudo udevadm control --reload && sudo udevadm trigger --action=add --subsystem-match=usb
-```
+    sudo udevadm control --reload && sudo udevadm trigger --action=add --subsystem-match=usb
 
-The tablet shows up with **two different IDs depending on the mode** (this is normal):
+The tablet shows two different IDs depending on the mode it is in. `1782:4d00` is download mode, the
+only one that matters for unlocking. Android and fastboot come up as `18d1:4ee8` and `18d1:4ee0`.
 
-| mode | VID:PID |
-|---|---|
-| download mode (BootROM / firmware download) | `1782:4d00` |
-| Android / fastboot | `18d1:4ee8`, `18d1:4ee0` |
+## Downloads
 
-## 3. Files to download
+`./install.sh check` fetches these and verifies the hashes in [CHECKSUMS.md](../CHECKSUMS.md). By hand:
 
-The installer fetches them itself (`./install.sh check`) and verifies the sha256 from
-[`CHECKSUMS.md`](../CHECKSUMS.md). To do it by hand:
+The GSI is `lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img.gz`, from
+[SourceForge](https://sourceforge.net/projects/andyyan-gsi/files/lineage-20-td/). Gunzip it.
 
-| file | where | why |
-|---|---|---|
-| **GSI** `lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img.gz` | [SourceForge — Andy Yan](https://sourceforge.net/projects/andyyan-gsi/files/lineage-20-td/) | the system that gets installed |
-| **Stock firmware** `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz` (1.9 GB) | [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) — mirror: [archive.org](https://archive.org/details/blackview-tab8-sc9863a-firmware) | safety net + FDLs + vbmeta; `gunzip` → 3.6 GB |
-| **Unlock kit** (`unlock-kit.tar.gz`, or the eight files individually) | [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) | everything needed to unlock |
+The stock firmware is `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz`, 1.9 GB, from the
+[Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) or the
+[archive.org mirror](https://archive.org/details/blackview-tab8-sc9863a-firmware). It is the recovery
+image, and it also holds the FDLs and the vbmeta images that are already in the kit. Gunzip it and you
+get 3.6 GB.
 
-> The available `.pac` is **NEU 2020**, while the tablet ships **EEA 2021**: for recovery that is fine
-> (same board, `s9863a1h10`), but restoring stock gives you Android 10 NEU, not the exact EEA build.
-> A dump of the exact stock system is *not* included — we never took one.
+The unlock kit is `unlock-kit.tar.gz`, 716 KB, from the Releases. Extract it into
+`artifacts/unlock-kit/`.
 
-## 4. Sanity check
+The `.pac` is the NEU build from 2020 while the tablet ships EEA 2021. For recovery that is fine, same
+board, but restoring stock gives Android 10 NEU rather than the EEA build it left the factory with.
+Nobody ever dumped that one.
 
-Boot the tablet, enable USB debugging (Settings → About → tap "Build number" 7× → Developer options
-→ USB debugging), then:
+## Before you start
 
-```
-./install.sh check
-```
+Turn the tablet on, enable USB debugging (Settings, About, tap Build number seven times, Developer
+options, USB debugging), then:
 
-It verifies: tools, USB permissions, the device being reachable, and the **supported firmware**.
-If the firmware does not match, the installer stops — that check is the most important protection of
-the whole procedure (the unlock artifacts are firmware-specific).
+    ./install.sh check
+
+It checks the tools, the udev permissions, whether the tablet is reachable, and the firmware version.
+If the firmware does not match it stops there.

@@ -1,46 +1,51 @@
-# Risks, first of all
+# Risks
 
-This procedure **unlocks the bootloader** and **writes to bootloader partitions**. It is not
-reversible with one click, and it is not for everyone.
+The procedure unlocks the bootloader and writes to bootloader partitions. It is not undone by
+running something in reverse.
 
-## What you lose, for sure
+## What is gone for good
 
-- **All data on the tablet** (photos, apps, accounts). Unlocking and switching to a GSI wipe
-  `userdata`. There is no way around it.
-- The **stock Blackview system** and whatever is left of the warranty.
-- The **"unlock" warning** at boot: it stays forever, as long as the bootloader is unlocked.
+All data on the tablet. Unlocking and installing a GSI both wipe `userdata`.
 
-## What you risk, if something goes wrong
+The stock Blackview system, and whatever is left of the warranty.
 
-| Risk | How bad | How to recover |
-|---|---|---|
-| Bootloop after flashing | annoying | reflash the bootloaders from the kit, or restore stock |
-| Wrong write to `splloader`/`uboot` | **bad**: the tablet no longer boots normally | only by entering **download mode** (Vol‑ + cable) and rewriting them |
-| Tablet that will not enter download mode | **very bad** | open the case and **disconnect the battery**; if the BootROM itself is damaged, recovery is uncertain |
+The "unlock" warning at every boot, for as long as the bootloader stays unlocked.
 
-This procedure does **not** touch the BootROM (the exploit runs in RAM), so download mode stays
-available: that is the reason recovery is realistic at all.
+## What can go wrong
 
-## Rules that are not optional
+A bootloop after flashing is the usual accident, and it is fixed by reflashing the bootloaders from
+the kit or by going back to stock.
 
-1. **Have the stock firmware before you start.** The `.pac` is your safety net: if the tablet does not
-   boot, you rewrite everything from it. The installer downloads it (or asks you for it) during
-   `check`. Without it, do not proceed.
-2. **Right firmware.** The unlock artifacts (`spl-unlock.bin`, `fdl2-cboot.bin`) come from **your**
-   `splloader` and **your** firmware's FDLs. On a different firmware they are **poison**. The
-   installer checks `ro.fota.version` and stops on a mismatch. Do not bypass that check.
-3. **One program at a time may talk to the tablet.** There is a single USB interface: two `spd_dump`
-   processes make everything fail with `LIBUSB_ERROR_BUSY`. Stop `adb` too.
-4. **Do not unplug during a write.** If it happens, the tablet stays in download mode: resume from
-   there, it is not the end.
-5. **Battery at least 50%** before you start.
+A wrong write to `splloader` or `uboot` stops the tablet from booting normally. The only way back is
+download mode: tablet off, hold Vol-, plug the cable. If it will not enter download mode, the case has
+to be opened and the battery disconnected.
 
-## What is not covered
+The BootROM itself is not touched; the exploit runs in RAM. That is why download mode keeps working
+and why these failures are recoverable at all.
 
-- Windows and macOS. Linux only.
-- Tablets with a firmware other than `Tab8_EEA_P30_V1.0_20211112V11` (enforced by the installer).
-- LineageOS OTA updates: with a GSI every update is a reflash.
-- Camera and LTE modem: untested (the vendor side is still the 2021 one).
+## Before starting
 
-If anything here is unclear to you, **stop**: a tablet that does not power on is a much bigger problem
-than a tablet on stock Android 10.
+Have the stock firmware. The `.pac` is the safety net: if the tablet stops booting, everything is
+rewritten from it. The installer fetches it during `check`, or asks where it is.
+
+Check the firmware. `spl-unlock.bin` and `fdl2-cboot.bin` are built from one particular firmware.
+On a Tab 8 with a different one they are incompatible images and the tablet will not boot. The
+installer compares `ro.fota.version` with `Tab8_EEA_P30_V1.0_20211112V11` and stops if it does not
+match. Do not work around that.
+
+One program at a time. There is a single USB interface: two `spd_dump` processes make everything fail
+with `LIBUSB_ERROR_BUSY`. Stop `adb` as well.
+
+Do not unplug during a write. If it happens the tablet stays in download mode and you start over.
+
+Battery above 50%.
+
+## Not covered
+
+Windows and macOS.
+
+Tablets with another firmware.
+
+LineageOS OTA updates: with a GSI, every update is a reflash.
+
+Camera and LTE modem, never tested. The vendor side is still from 2021.

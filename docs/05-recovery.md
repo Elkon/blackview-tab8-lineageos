@@ -1,70 +1,66 @@
 # Going back
 
-There are three levels of "go back". Pick according to what you broke.
+Three cases. Pick by what broke.
 
-## A. Bootloop, but download mode still works
+## The tablet loops but download mode works
 
-**The common case.** You do not need the stock firmware: the original bootloaders are enough — the
-installer saves them before touching anything (`backups/splloader`, `backups/uboot`,
-`backups/miscdata.bin`).
+You do not need the stock firmware for this one. The original bootloaders are enough, and the
+installer saved them before touching anything in `backups/`.
 
-```
-./install.sh restore
-```
+    ./install.sh restore
 
-It writes back the original `splloader`, `uboot` and `miscdata`. If the system (the GSI) is healthy, it
-boots again.
+That writes back `splloader`, `uboot` and `miscdata`. If only the system was broken it boots again.
 
-If you flashed a wrong GSI (Android 14, for instance) and it loops, restoring the bootloaders is not
-enough: reflash the right `system` ([`03-flash-gsi.md`](03-flash-gsi.md)) or go back to stock (B).
+If you flashed the wrong GSI, Android 14 for instance, restoring the bootloaders is not enough:
+reflash the right `system`, or go back to stock below.
 
-## B. Back to stock Android 10 (Blackview)
+## Back to stock Android 10
 
-You need the `.pac` — a Release asset of this repository, mirrored on
-[archive.org](https://archive.org/details/blackview-tab8-sc9863a-firmware) (1.9 GB `.gz`, `gunzip` it
-first). From download mode, with `spd_dump`:
+Needs the `.pac`: a Release asset of this repository, mirrored on
+[archive.org](https://archive.org/details/blackview-tab8-sc9863a-firmware). It arrives gzipped, so
+`gunzip` it first.
 
-```
-spd_dump --wait 300 exec_addr 0x4ee8 \
-  fdl fdl1-dl.bin 0x5000 fdl fdl2-dl.bin 0x9EFFFE00 exec \
-  blk_size 0x8000 \
-  w_force super super.img \
-  w splloader splloader-stock.bin \
-  w uboot uboot-stock.bin \
-  w trustos trustos-stock.bin \
-  reset
-```
+From download mode:
 
-The `*-stock` images are extracted from the `.pac` with `unpac` (bundled with `spreadtrum_flash`):
+    spd_dump --wait 300 exec_addr 0x4ee8 \
+      fdl fdl1-dl.bin 0x5000 fdl fdl2-dl.bin 0x9EFFFE00 exec \
+      blk_size 0x8000 \
+      w_force super super.img \
+      w splloader splloader-stock.bin \
+      w uboot uboot-stock.bin \
+      w trustos trustos-stock.bin \
+      reset
 
-```
-./unpac list DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac
-./unpac -d extracted extract DK_....pac super.img u-boot-spl-16k-sign.bin u-boot-sign.bin tos-sign.bin
-```
+The `*-stock` images come out of the `.pac` with `unpac`, which ships with `spreadtrum_flash`:
 
-> The available `.pac` is **NEU 2020**: you get a working Android 10, but not the EEA 2021 build the
-> tablet shipped with (that was never dumped). The tablet is fully usable again, and it stays
-> **unlocked**.
+    ./unpac list DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac
+    ./unpac -d extracted extract DK_....pac super.img u-boot-spl-16k-sign.bin u-boot-sign.bin tos-sign.bin
 
-The official route is `ResearchDownload` (Windows) or `Factory Download` with the same `.pac`, which
-rewrites everything — that is what the "unbrick" guides use.
+This is the NEU build from 2020, so you get a working Android 10 but not the EEA 2021 build the tablet
+shipped with. It stays unlocked, and it is fully usable.
 
-## C. The tablet will not enter download mode
+The other route is `ResearchDownload` or `Factory Download` on Windows with the same `.pac`, which
+rewrites everything. That is what the unbrick guides use.
 
-**The bad case.** If holding **Vol‑** while plugging the cable does not make `1782:4d00` appear:
+## It will not enter download mode
 
-1. **Unplug the cable** (in charging mode the tablet is invisible to the PC) and force a power-off with
-  **Power for 15–20 s**.
-2. Retry holding **Vol‑** *before* plugging the cable, and keep holding ~10 s.
-3. Also try **Vol+**, or **Power + Vol‑** together.
-4. If nothing works: **open the case and disconnect the battery** for a few seconds, then reconnect and
-   retry. Several people recovered tablets given up for dead this way (sometimes it was just a fully
-   drained battery).
+Tablet off, hold Vol-, plug the cable, and `1782:4d00` does not appear.
 
-## What NOT to do
+Unplug the cable first: in charging mode the tablet is invisible to the PC. Force the power off with
+Power held for fifteen or twenty seconds. Then try again with Vol- held before the cable goes in, and
+keep holding for about ten seconds. Vol+ alone, or Power with Vol-, sometimes works where Vol- does
+not.
 
-- Do not write `splloader`/`uboot` with images from **another** tablet or another firmware: it is the
-  fastest way to turn a bootloop into a paperweight.
-- Do not remove the battery with the cable plugged in.
-- Do not interrupt a `super` write (4 GB): if it happens the tablet stays in download mode and you
-  repeat it — not fatal, but you need the `.pac`.
+If none of that produces a device, the case has to be opened and the battery disconnected for a few
+seconds. People have recovered tablets given up for dead this way, sometimes because the only problem
+was a completely flat battery.
+
+## What not to do
+
+Do not write `splloader` or `uboot` from another tablet or another firmware. That is the quickest way
+to turn a bootloop into a tablet that never boots again.
+
+Do not pull the battery with the cable connected.
+
+An interrupted `super` write is not fatal: the tablet stays in download mode and you start again. It
+does need the `.pac`.

@@ -1,80 +1,60 @@
-# After installing: hardware check and tuning
+# After installing
 
-## Hardware check
+## What works
 
-On real hardware (Tab 8, EEA 2021 build) the following work:
+On our unit: wifi, touch, audio, auto-rotation, brightness. Camera and the LTE modem were not tried.
 
-| | |
-|---|---|
-| Wifi | ✅ |
-| Touch | ✅ |
-| Audio | ✅ |
-| Auto-rotation | ✅ |
-| Brightness | ✅ |
-| Camera | untested |
-| LTE modem | untested |
+The bootloader state, from adb:
 
-Quick bootloader state check:
+    adb shell getprop ro.boot.flash.locked         # 0
+    adb shell getprop ro.boot.verifiedbootstate    # orange
+    adb shell getprop ro.boot.vbmeta.device_state  # unlocked
 
-```
-adb shell getprop ro.boot.flash.locked        # must be 0
-adb shell getprop ro.boot.verifiedbootstate   # orange = unlocked
-adb shell getprop ro.boot.vbmeta.device_state # unlocked
-```
+## Making it less sluggish
 
-## Tuning (weak GPU, 4 GB RAM)
+The PowerVR GE8322 is the weak part, and it is compositing a 1200x1920 panel. Three things help, all
+of them revertible.
 
-The bottleneck is the **PowerVR GE8322** compositing a 1200×1920 panel. Three changes, in order of
-impact, all reversible:
+Fewer pixels is the big one:
 
-### 1. Compose fewer pixels (the biggest win)
+    adb shell wm size 800x1280
+    adb shell wm density 160
 
-```
-adb shell wm size 800x1280
-adb shell wm density 160
-```
+Same ratio, 1.5x fewer pixels, same physical size of the interface. `wm size reset` and
+`wm density reset` put it back.
 
-Same panel ratio (1.5× fewer pixels), same physical UI size (240/1.5 = 160 dpi). Revert with
-`wm size reset && wm density reset`.
+The panel reports itself as portrait, so the order is width by height. Setting a landscape size makes
+rotation come out inverted, which is confusing until you notice.
 
-> Mind the `width x height` order: the panel reports itself as **portrait** (1200×1920). If you set a
-> landscape size, rotation ends up inverted.
+Shorter animations:
 
-### 2. Shorter animations
+    adb shell settings put global window_animation_scale 0.5
+    adb shell settings put global transition_animation_scale 0.5
+    adb shell settings put global animator_duration_scale 0.5
 
-```
-adb shell settings put global window_animation_scale 0.5
-adb shell settings put global transition_animation_scale 0.5
-adb shell settings put global animator_duration_scale 0.5
-```
+Compile everything ahead of time, once, with the tablet idle and plugged in. Takes half an hour and
+makes it hot:
 
-### 3. Ahead-of-time compile the apps
+    adb shell cmd package compile -m speed -f -a
 
-```
-adb shell cmd package compile -m speed -f -a
-```
-
-Takes 30–60 minutes and heats the tablet: run it once, idle and plugged in. Afterwards apps open
-without the runtime compile cost.
-
-### What does not help
-
-- **`debug.hwui.renderer=skiagl`**: the system **already** uses Skia on OpenGL
-  (`dumpsys gfxinfo` → `Pipeline=Skia (OpenGL)`). Changing it does nothing; `skiavk` is slower on this
-  GPU.
+`debug.hwui.renderer=skiagl` does nothing here. The system already runs Skia on OpenGL, check with
+`dumpsys gfxinfo`. The Vulkan backend is slower on this GPU.
 
 ## Battery
 
-There is no software charge control: `/sys/class/power_supply/battery/{constant_charge_current,input_current_limit,charge_control_limit}`
-are `-rw-` but writes are **reverted to the policy value** by Unisoc's `charger-manager`, and
-`constant_charge_voltage` is **read-only** (`-r--r--r--`).
+There is no charge limit. `constant_charge_current` and `input_current_limit` are writable in
+appearance but Unisoc's `charger-manager` puts the policy value back immediately, and
+`constant_charge_voltage` is read-only even for root. The BATFET bypass the BQ2560x offers lives
+behind i2c registers that are not exposed, and a wrong write there leaves a tablet that will not
+charge.
 
-Consequence for a fixed installation (wall dashboard): at full charge the system runs from USB and the
-battery is not cycled, but it stays at 100% — and heat is the main ageing factor. Options: keep it cool,
-or cycle the power with a smart plug between ~40% and ~80%
-(`adb shell cat /sys/class/power_supply/battery/capacity` is readable).
+When it is plugged in and full the system runs from USB and the battery is not cycled. It just sits at
+100%, and heat is what ages it. For a tablet mounted on a wall, the workable options are keeping it
+cool, or switching the supply with a smart plug between about 40% and 80%:
+
+    adb shell cat /sys/class/power_supply/battery/capacity
 
 ## Root
 
-LineageOS disables it by default: Settings → System → Developer options → **Rooted debugging** ("Debug
-root"), then `adb root`. You also need it for `dd` of raw partitions (e.g. a `super` backup).
+Off by default. Settings, System, Developer options, Rooted debugging, then `adb root`. It is also
+what you need to `dd` a raw partition, for example a `super` backup.
