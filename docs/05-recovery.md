@@ -20,7 +20,9 @@ enough: reflash the right `system` ([`03-flash-gsi.md`](03-flash-gsi.md)) or go 
 
 ## B. Back to stock Android 10 (Blackview)
 
-You need the `.pac` (a Release asset of this repository). From download mode, with `spd_dump`:
+You need the `.pac` — a Release asset of this repository, mirrored on
+[archive.org](https://archive.org/details/blackview-tab8-sc9863a-firmware) (1.9 GB `.gz`, `gunzip` it
+first). From download mode, with `spd_dump`:
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 \

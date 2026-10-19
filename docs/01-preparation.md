@@ -47,7 +47,7 @@ The installer fetches them itself (`./install.sh check`) and verifies the sha256
 | file | where | why |
 |---|---|---|
 | **GSI** `lineage-20.0-20251021-UNOFFICIAL-arm64_bvN-vndklite.img.gz` | [SourceForge — Andy Yan](https://sourceforge.net/projects/andyyan-gsi/files/lineage-20-td/) | the system that gets installed |
-| **Stock firmware** `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz` (1.9 GB) | [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) | safety net + FDLs + vbmeta; `gunzip` → 3.6 GB |
+| **Stock firmware** `DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz` (1.9 GB) | [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) — mirror: [archive.org](https://archive.org/details/blackview-tab8-sc9863a-firmware) | safety net + FDLs + vbmeta; `gunzip` → 3.6 GB |
 | **Unlock kit** (`unlock-kit.tar.gz`, or the eight files individually) | [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) | everything needed to unlock |
 
 > The available `.pac` is **NEU 2020**, while the tablet ships **EEA 2021**: for recovery that is fine

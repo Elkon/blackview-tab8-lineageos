@@ -21,6 +21,7 @@ Gunzip the `.img.gz` **before** computing the sha256: the value above is for the
 | sha256 of the `.gz` | `0f7dd60dd51f22f0c4e7099393d698676d703327fe3f3eb6ac676ca61524b362` |
 | sha256 of the unpacked `.pac` | `e0531f310597b4bd4ee0bad232640a4eecfc2c11a2776d27ee955df3c6d30d8c` |
 | board declared by the archive | `s9863a1h10` — the same as this tablet |
+| **mirror** | <https://archive.org/details/blackview-tab8-sc9863a-firmware> (direct: <https://archive.org/download/blackview-tab8-sc9863a-firmware/DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac.gz>) |
 
 Obtained with `gunzip DK_....pac.gz` (3.6 GB unpacked). It is a **mirror** of Blackview firmware that
 is already publicly distributed: if you are the rights holder and want it removed, open an issue.
