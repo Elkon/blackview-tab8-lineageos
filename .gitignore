@@ -1,0 +1,14 @@
+# Binari e firmware: NON stanno nel repo, stanno nelle Releases.
+artifacts/*.bin
+artifacts/*.img
+artifacts/*.tar.gz
+artifacts/unlock-kit/
+*.pac
+*.img
+*.gz
+*.zip
+*.xz
+# Roba locale
+backups/
+extracted/
+super*.img

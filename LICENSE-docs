@@ -1,0 +1,14 @@
+La documentazione di questo repository (README.md, FAQ.md, CHECKSUMS.md e tutto
+il contenuto di docs/) e' distribuita con licenza
+
+    Creative Commons Attribuzione - Condividi allo stesso modo 4.0 Internazionale
+    (CC BY-SA 4.0)
+
+Testo integrale: https://creativecommons.org/licenses/by-sa/4.0/legalcode.it
+
+In breve: puoi copiare, modificare e ridistribuire i testi, anche per uso
+commerciale, a condizione di citare la fonte e di distribuire le opere derivate
+con la stessa licenza.
+
+Il codice (install.sh e gli script in scripts/) e' invece distribuito con
+licenza MIT: vedi il file LICENSE.
