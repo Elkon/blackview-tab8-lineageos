@@ -72,4 +72,8 @@ CHECKSUMS.md        sha256 di tutto ciò che si scarica
 - La ricetta specifica per il Tab 8 (quali file, in che ordine, e le trappole) è verificata su
   hardware reale da questo repo.
 
-Licenze: codice MIT, testi CC BY-SA 4.0. Vedi `LICENSE` e `LICENSE-docs`.
+Licenze: **codice MIT**, **testi CC BY-SA 4.0** (vedi `LICENSE` e `LICENSE-docs`).
+
+I **binari** nelle Releases non sono coperti da queste licenze: sono file del vendor (Blackview/Unisoc)
+e di TomKing062. La provenienza file per file, e come rigenerarli o evitarli, è in
+[`artifacts/README.md`](artifacts/README.md).
