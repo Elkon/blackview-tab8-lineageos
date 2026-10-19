@@ -1,4 +1,4 @@
-# Binari e firmware: NON stanno nel repo, stanno nelle Releases.
+# Binaries and firmware: NOT in the repo, they live in the Releases.
 artifacts/*.bin
 artifacts/*.img
 artifacts/*.tar.gz
@@ -8,7 +8,7 @@ artifacts/unlock-kit/
 *.gz
 *.zip
 *.xz
-# Roba locale
+# Local working files
 backups/
 extracted/
 super*.img

@@ -1,25 +1,26 @@
-# Tornare indietro
+# Going back
 
-Ci sono tre livelli di "tornare indietro". Scegli in base a cosa hai rotto.
+There are three levels of "go back". Pick according to what you broke.
 
-## A. Il tablet è in bootloop, ma entra in download mode
+## A. Bootloop, but download mode still works
 
-**Caso più comune.** Non serve il firmware stock: bastano i bootloader originali, che l'installer
-salva prima di toccarli (`backup/splloader.bin`, `backup/uboot.bin`, `backup/miscdata.bin`).
+**The common case.** You do not need the stock firmware: the original bootloaders are enough — the
+installer saves them before touching anything (`backups/splloader`, `backups/uboot`,
+`backups/miscdata.bin`).
 
 ```
 ./install.sh restore
 ```
 
-Rimette `splloader`, `uboot` e `miscdata` originali. Se il sistema (la GSI) è sano, riparte.
+It writes back the original `splloader`, `uboot` and `miscdata`. If the system (the GSI) is healthy, it
+boots again.
 
-Se invece hai flashato una GSI sbagliata (per esempio Android 14) e resta in loop, il ripristino dei
-bootloader **non basta**: bisogna riflashare la `system` giusta
-([`03-flash-gsi.md`](03-flash-gsi.md)) oppure tornare allo stock (punto B).
+If you flashed a wrong GSI (Android 14, for instance) and it loops, restoring the bootloaders is not
+enough: reflash the right `system` ([`03-flash-gsi.md`](03-flash-gsi.md)) or go back to stock (B).
 
-## B. Tornare ad Android 10 stock (Blackview)
+## B. Back to stock Android 10 (Blackview)
 
-Serve il `.pac` (scaricabile dalle Releases di questo repo). Da download mode, con `spd_dump`:
+You need the `.pac` (a Release asset of this repository). From download mode, with `spd_dump`:
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 \
@@ -32,37 +33,36 @@ spd_dump --wait 300 exec_addr 0x4ee8 \
   reset
 ```
 
-Le immagini `*-stock` si estraggono dal `.pac` con `unpac` (incluso in `spreadtrum_flash`):
+The `*-stock` images are extracted from the `.pac` with `unpac` (bundled with `spreadtrum_flash`):
 
 ```
 ./unpac list DK_SC9863A_P30_5G_10.0_Tab8_NEU_20200731_V1.0.pac
 ./unpac -d extracted extract DK_....pac super.img u-boot-spl-16k-sign.bin u-boot-sign.bin tos-sign.bin
 ```
 
-> Il `.pac` disponibile è **NEU 2020**: otterrai un Android 10 funzionante, ma non la build EEA 2021
-> che aveva il tablet di fabbrica (quella non è mai stata dumpata). Il tablet torna comunque
-> completamente usabile, e resta **sbloccato**.
+> The available `.pac` is **NEU 2020**: you get a working Android 10, but not the EEA 2021 build the
+> tablet shipped with (that was never dumped). The tablet is fully usable again, and it stays
+> **unlocked**.
 
-In alternativa, la via ufficiale: `ResearchDownload` (Windows) o `Factory Download` con lo stesso
-`.pac`, che riscrive tutto — è la strada che usano le guide per "unbrick".
+The official route is `ResearchDownload` (Windows) or `Factory Download` with the same `.pac`, which
+rewrites everything — that is what the "unbrick" guides use.
 
-## C. Il tablet non entra in download mode
+## C. The tablet will not enter download mode
 
-**Il caso brutto.** Se tenere premuto **Vol‑** mentre inserisci il cavo non fa comparire
-`1782:4d00`:
+**The bad case.** If holding **Vol‑** while plugging the cable does not make `1782:4d00` appear:
 
-1. **Scollega il cavo** (in modalità carica il tablet non è visibile al PC) e forza lo spegnimento
-   con **Power 15–20 s**.
-2. Riprova tenendo premuto **Vol‑** *prima* di inserire il cavo, e continua a tenerlo ~10 s.
-3. Prova anche **Vol+**, o **Power + Vol‑** insieme.
-4. Se niente funziona: **apri la scocca e scollega la batteria** per qualche secondo, poi ricollega e
-   riprova. Diverse persone hanno recuperato così tablet dati per morti (a volte era solo la batteria
-   completamente scarica).
+1. **Unplug the cable** (in charging mode the tablet is invisible to the PC) and force a power-off with
+  **Power for 15–20 s**.
+2. Retry holding **Vol‑** *before* plugging the cable, and keep holding ~10 s.
+3. Also try **Vol+**, or **Power + Vol‑** together.
+4. If nothing works: **open the case and disconnect the battery** for a few seconds, then reconnect and
+   retry. Several people recovered tablets given up for dead this way (sometimes it was just a fully
+   drained battery).
 
-## Cosa NON fare
+## What NOT to do
 
-- Non scrivere `splloader`/`uboot` con immagini prese da **un altro** tablet o da un altro firmware:
-  è il modo più rapido per trasformare un bootloop in un fermacarte.
-- Non rimuovere la batteria con il cavo collegato.
-- Non interrompere una scrittura di `super` (4 GB): se si interrompe, il tablet resta in download mode
-  e si ripete — non è definitivo, ma serve il `.pac`.
+- Do not write `splloader`/`uboot` with images from **another** tablet or another firmware: it is the
+  fastest way to turn a bootloop into a paperweight.
+- Do not remove the battery with the cable plugged in.
+- Do not interrupt a `super` write (4 GB): if it happens the tablet stays in download mode and you
+  repeat it — not fatal, but you need the `.pac`.

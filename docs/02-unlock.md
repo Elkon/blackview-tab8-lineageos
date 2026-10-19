@@ -1,27 +1,27 @@
-# Sblocco del bootloader (BootROM, CVE-2022-38694)
+# Unlocking the bootloader (BootROM, CVE-2022-38694)
 
-Il fastboot di questo tablet **non implementa lo sblocco**: `fastboot flashing unlock` risponde
-`Not implemet.` e `fastboot oem unlock` risponde `unknown cmd.`. L'unica via è il **BootROM**, con
-l'exploit [CVE-2022-38694](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader) di
-TomKing062: si carica in RAM un piccolo payload che aggira la verifica di firma del BootROM, si
-caricano FDL firmati presi dal firmware, e da lì si scrive nelle partizioni del bootloader.
+This tablet's fastboot **does not implement unlocking**: `fastboot flashing unlock` answers
+`Not implemet.` and `fastboot oem unlock` answers `unknown cmd.`. The only way in is the **BootROM**,
+using [CVE-2022-38694](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader) by TomKing062:
+a tiny payload is loaded into RAM, it bypasses the BootROM signature check, signed FDLs taken from the
+firmware are loaded, and from there bootloader partitions can be written.
 
-**Tutto il merito del metodo è suo.** Qui c'è solo la ricetta per il Tab 8.
+**All the credit for the method is his.** What follows is just the Tab 8 recipe.
 
-## Cosa fa l'exploit, in breve
+## What the exploit does, briefly
 
-Unisoc verifica la firma di ciò che il PC gli manda nel BootROM. Il payload
-(`custom_exec_no_verify_4ee8.bin`, 128 byte) sfrutta un difetto che permette di eseguire codice con i
-privilegi del BootROM: da lì i controlli di firma non valgono più, e si può caricare il proprio
-`fdl1`/`fdl2` e scrivere `splloader`, `uboot`, `trustos`.
+Unisoc verifies the signature of everything the PC sends to the BootROM. The payload
+(`custom_exec_no_verify_4ee8.bin`, 128 bytes) abuses a flaw that allows executing code with BootROM
+privileges: from there signature checks no longer apply and you can load your own `fdl1`/`fdl2` and
+write `splloader`, `uboot`, `trustos`.
 
-## La sequenza (quella automatizzata da `./install.sh unlock`)
+## The sequence (`./install.sh unlock` automates it)
 
-Si entra in **download mode**: tablet spento, **Vol‑ premuto**, inserisci il cavo, tieni ~10 s. Il
-tablet compare come `1782:4d00` e ci resta ~30 secondi: per questo l'installer resta in attesa prima
-(`spd_dump --wait`) e poi ti chiede la combo.
+Enter **download mode**: tablet off, hold **Vol‑**, plug the cable, keep holding ~10 s. The tablet
+appears as `1782:4d00` and stays for ~30 seconds — which is why the installer waits first
+(`spd_dump --wait`) and then asks you for the key combo.
 
-### 1. Dump dei bootloader e sblocco
+### 1. Dump your bootloaders, then unlock
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 \
@@ -31,68 +31,63 @@ spd_dump --wait 300 exec_addr 0x4ee8 \
   w uboot fdl2-cboot.bin reset
 ```
 
-- `r splloader r uboot` → **salva i tuoi** bootloader originali (servono al ripristino: non usare
-  quelli di altri).
-- `e splloader e splloader_bak` → cancella lo stadio che il BootROM caricherebbe da flash. Da qui il
-  tablet non si avvia più normalmente: **è previsto**.
-- `w uboot fdl2-cboot.bin` → mette un `uboot` che non verifica le firme degli stadi successivi.
+- `r splloader r uboot` → saves **your own** bootloaders (you need them for the restore; never use
+  somebody else's).
+- `e splloader e splloader_bak` → erases the stage the BootROM would load from flash. From here the
+  tablet no longer boots normally: **that is expected**.
+- `w uboot fdl2-cboot.bin` → installs an `uboot` that does not verify later stages.
 
-### 2. L'unlock vero e proprio
+### 2. The unlock itself
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 fdl spl-unlock.bin 0x5000
 ```
 
-`spl-unlock.bin` è **il tuo** `splloader` con il controllo di firma neutralizzato (73 istruzioni
-`NOP`): lo genera `gen_spl-unlock-legacy` dal dump del passo 1.
+`spl-unlock.bin` is **your own** `splloader` with the signature checks neutralised (73 `NOP`s):
+`gen_spl-unlock-legacy` produces it from the dump taken in step 1.
 
-> ⚠️ **Questo comando "fallisce" ed è il segnale che ha funzionato.** L'SPL patchato non resta in
-> attesa del PC (niente risposta al `CHECK_BAUD`: vedrai `usb_recv failed` e `TIMEOUT`): tira dritto,
-> carica l'`uboot` patchato e quello scrive i dati di sblocco. La prova vera è il passo 3.
+> ⚠️ **This command "fails", and that is the signal it worked.** The patched SPL does not wait for
+> the PC (no `CHECK_BAUD` answer: you will see `usb_recv failed` and timeouts): it moves on, boots the
+> patched `uboot`, and *that* writes the unlock data. The real proof is step 3.
 
-### 3. Verifica
+### 3. Verify
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 fdl fdl1-dl.bin 0x5000 fdl fdl2-dl.bin 0x9EFFFE00 exec \
   blk_size 0x8000 read_part miscdata 8192 64 m_after.bin reset
 ```
 
-- **64 byte tutti a zero** → ancora bloccato: ripeti il passo 2.
-- **32 byte + 16 + 16** (hash) → **sbloccato** (è il "legal unlock data" che il bootloader scrive in
-  `miscdata` a `0x2000`).
+- **64 zero bytes** → still locked: repeat step 2.
+- **32 bytes + 16 + 16** (hashes) → **unlocked** (the "legal unlock data" the bootloader writes into
+  `miscdata` at `0x2000`).
 
-### 4. AVB fuori dai piedi
+### 4. Get AVB out of the way
 
-Il bootloader continuerebbe a pretendere immagini firmate dal vendor. `dis_avb` patcha il **tuo**
-`trustos` (dove Unisoc fa la verifica vera, via TEE) e lo riscrive:
+The bootloader would still demand vendor-signed images. `dis_avb` patches **your own** `trustos`
+(where Unisoc performs the real verification, through the TEE) and writes it back:
 
 ```
 spd_dump --wait 300 exec_addr 0x4ee8 fdl fdl1-dl.bin 0x5000 fdl fdl2-dl.bin 0x9EFFFE00 exec \
   blk_size 0x8000 dis_avb reset
 ```
 
-### 5. Ripristino dei bootloader originali
+### 5. Restore the original bootloaders
 
-Si rimettono `splloader` e `uboot` salvati al passo 1 (lo sblocco è già registrato in `miscdata`):
+Put back the `splloader` and `uboot` saved in step 1 (the unlock is already recorded in `miscdata`).
+From here the tablet boots again — **on stock Android if you have not flashed the GSI yet**, with an
+unlocked bootloader.
 
-```
-spd_dump ... w splloader <tuo splloader> w uboot <tuo uboot> reset
-```
+## Why the firmware matters
 
-Da qui il tablet riparte — **con Android stock se non hai ancora flashato la GSI**, e con il
-bootloader sbloccato.
+`spl-unlock.bin`, `fdl2-cboot.bin` and `fdl1-dl.bin` are derived from **that** firmware. On a Tab 8
+with a different one (NEU 2020, ROW, Android 11 OTA) they are incompatible images: the tablet will not
+boot and you need *their* `.pac` to get back. The installer verifies `ro.fota.version` and stops on a
+mismatch — **do not bypass that check**.
 
-## Firmware: perché conta
+## References
 
-`spl-unlock.bin`, `fdl2-cboot.bin` e `fdl1-dl.bin` sono derivati da **quel** firmware. Su un Tab 8
-con firmware diverso (NEU 2020, ROW, OTA A11) sono immagini incompatibili: il tablet non si avvia e
-serve il loro `.pac` per tornare indietro. L'installer verifica `ro.fota.version` e si ferma se non
-combacia — **non aggirare quel controllo**.
-
-## Riferimenti
-
-- [TomKing062/CVE-2022-38694_unlock_bootloader](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader) — tool, payload, wiki
-- [Wiki — Unlock](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader/wiki/Unlock) ·
+- [TomKing062/CVE-2022-38694_unlock_bootloader](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader) — tool, payloads, wiki
+- Wiki: [Unlock](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader/wiki/Unlock) ·
   [SupportList](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader/wiki/SupportList) ·
   [AddSupportToModel](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader/wiki/AddSupportToModel)
-- [NCC Group — There's another hole in your SoC](https://research.nccgroup.com/2022/09/02/theres-another-hole-in-your-soc-unisoc-rom-vulnerabilities/) — l'analisi del difetto
+- [NCC Group — There's another hole in your SoC](https://research.nccgroup.com/2022/09/02/theres-another-hole-in-your-soc-unisoc-rom-vulnerabilities/) — the flaw analysis

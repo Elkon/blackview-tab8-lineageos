@@ -1,50 +1,49 @@
-# FAQ — le cinque trappole
+# FAQ — the five traps
 
-Sono i punti in cui ci si blocca davvero. Li abbiamo pagati uno per uno.
+These are the places where people actually get stuck. We paid for each one.
 
 ---
 
-## 1. `spd_dump` resta per sempre su "Waiting for dl_diag connection"
+## 1. `spd_dump` sits forever on "Waiting for dl_diag connection"
 
-**Anche se il tablet è collegato e il nodo USB ha i permessi giusti.**
+**Even though the tablet is plugged in and the USB node has the right permissions.**
 
-Non è il tablet: è che `spd_dump` si appoggia all'**hotplug di libusb**, che su Linux ascolta gli
-eventi di **udevd**. Se `udevd` non gira (container, sistemi minimali, `/sys` read-only) il programma
-resta in attesa per sempre.
+It is not the tablet: `spd_dump` relies on **libusb hotplug**, which on Linux listens for **udevd**
+events. If `udevd` is not running (containers, minimal systems, read-only `/sys`) the program waits
+forever.
 
-Verifica:
+Check:
 
 ```
 systemctl is-active systemd-udevd
 ```
 
-Se non è attivo:
+If it is not active:
 
 ```
 sudo systemctl start systemd-udevd
-# oppure, se systemd lo salta per una condizione:
+# or, if systemd skips it because of an unmet condition:
 sudo nohup /lib/systemd/systemd-udevd &
 ```
 
-Sintomo alternativo, che indica la stessa famiglia di problemi: `libusb_claim_interface failed :
-LIBUSB_ERROR_BUSY`.
+Related symptom, same family: `libusb_claim_interface failed : LIBUSB_ERROR_BUSY`.
 
 ---
 
-## 2. `LIBUSB_ERROR_BUSY` al claim dell'interfaccia
+## 2. `LIBUSB_ERROR_BUSY` when claiming the interface
 
-L'interfaccia USB del tablet è **una sola**: o la tiene un altro programma, o la tiene il tool stesso.
+The tablet has a **single** USB interface: either another program holds it, or the tool itself does.
 
-- **Un altro programma**: `sudo pkill -x spd_dump` e ferma anche `adb` (`adb kill-server`) prima di
-  lanciare `spd_dump`. Due `spd_dump` insieme non funzionano *mai*.
-- **Il tool stesso**: alcune versioni aprono il device due volte e il secondo `claim` sbatte contro il
-  primo. Se succede, aggiorna `spd_dump` all'ultima versione del fork di TomKing062.
+- **Another program**: `sudo pkill -x spd_dump`, and stop `adb` (`adb kill-server`) before running
+  `spd_dump`. Two `spd_dump` processes never work together.
+- **The tool itself**: some versions open the device twice and the second claim collides with the
+  first. If that happens, update `spd_dump` to the latest build of TomKing062's fork.
 
 ---
 
-## 3. `install.sh unlock` dice che il passo dell'SPL è fallito (ma ha funzionato)
+## 3. `install.sh unlock` says the SPL step failed (but it worked)
 
-L'output contiene:
+The output contains:
 
 ```
 usb_recv failed : LIBUSB_ERROR_TIMEOUT
@@ -52,52 +51,51 @@ CHECK_BAUD FAIL
 usb_send failed : LIBUSB_ERROR_TIMEOUT
 ```
 
-**È il comportamento atteso.** `spl-unlock.bin` non resta in attesa del PC: esegue, carica l'`uboot`
-patchato e quello scrive i dati di sblocco. Il tool non riceve risposta e sembra morto.
+**This is expected.** `spl-unlock.bin` does not wait for the PC: it runs, loads the patched `uboot`,
+and that writes the unlock data. The tool gets no answer and looks dead.
 
-La prova vera è la verifica di `miscdata`:
+The real proof is the `miscdata` check:
 
 ```
 spd_dump ... read_part miscdata 8192 64 m_after.bin
 ```
 
-- 64 byte **tutti a zero** → non è sbloccato, ripeti il passo.
-- 32 byte + 16 + 16 → **sbloccato**.
+- 64 bytes **all zero** → not unlocked, repeat the step.
+- 32 bytes + 16 + 16 → **unlocked**.
 
-Non "correggere" quel timeout: non è un errore.
+Do not "fix" that timeout: it is not an error.
 
 ---
 
-## 4. `fastboot erase` risponde `Erasing failed`
+## 4. `fastboot erase` answers `Erasing failed`
 
-Questo bootloader non implementa `erase` per `userdata`, `metadata` e `misc`. Si aggira **flashendo
-un'immagine** di zeri al loro posto:
+This bootloader does not implement `erase` for `userdata`, `metadata` and `misc`. Work around it by
+**flashing an image** of zeros over them:
 
 ```
-# misc (1 MB) — serve per cancellare il comando "boot-fastboot" e far ripartire Android
+# misc (1 MB) — needed to clear the "boot-fastboot" command so Android boots again
 dd if=/dev/zero of=misc-zero.img bs=1M count=1
 fastboot flash misc misc-zero.img
 ```
 
-Per `userdata` il wipe si fa dalla recovery (Wipe data/factory reset) oppure dal tool in download mode
-(scrive il comando in `misc` e cancella `metadata`).
+For `userdata` the wipe is done from recovery (Wipe data/factory reset) or from the tool in download
+mode (it writes the wipe command into `misc` and erases `metadata`).
 
 ---
 
-## 5. Dopo il flash resta sul logo Blackview (bootloop)
+## 5. After flashing it stays on the Blackview logo (bootloop)
 
-In ordine di probabilità:
+In order of likelihood:
 
-1. **`misc` contiene ancora `boot-fastboot`** → il tablet non prova nemmeno ad avviare Android.
-   Azzera `misc` (vedi punto 4).
-2. **`product` non è stata ricreata** → la fstab del vendor la monta, e init non arriva in fondo.
-   `fastboot create-logical-partition product 0x4000000` + `flash product` con un ext4 vuoto.
-3. **GSI sbagliata**: **Android 14 non parte** su questo vendor. Serve la **20 (Android 13)**,
-   `arm64_bvN-vndklite`. Con A14 il loop c'è anche con AVB completamente disattivato: non perdere
-   giorni.
-4. **Dati vecchi**: se non hai fatto il wipe, l'userdata di Android 10 non è montabile da Android 13.
+1. **`misc` still contains `boot-fastboot`** → the tablet does not even try to boot Android. Zero
+   `misc` (see point 4).
+2. **`product` was not recreated** → the vendor fstab mounts it and init never finishes.
+   `fastboot create-logical-partition product 0x4000000` + `flash product` with an empty ext4.
+3. **Wrong GSI**: **Android 14 does not boot** on this vendor. You need the **20 (Android 13)**,
+   `arm64_bvN-vndklite`. With A14 the loop happens even with AVB fully disabled — do not waste days.
+4. **Old data**: if you never wiped, Android 10's `userdata` cannot be mounted by Android 13.
 
-Per capire *dove* si ferma, leggi il log del bootloader:
+To find out *where* it stops, read the bootloader log:
 
 ```
 spd_dump ... read_part uboot_log 0 0x400000 uboot_log.bin
@@ -106,11 +104,11 @@ strings uboot_log.bin | grep -E "veritymode|enter mode|Error"
 
 ---
 
-## Extra: `adb` non vede il tablet (o "no permissions")
+## Extra: `adb` does not see the tablet (or "no permissions")
 
-- Il tablet in modalità **download** non è un device Android: `adb` non lo vede, è normale.
-- Dopo l'installazione LineageOS **non espone il seriale** sulla USB: se avevi una regola udev legata al
-  seriale, non scatta più. Usa le regole per VID (`1782` e `18d1`, vedi
-  [`01-preparazione.md`](01-preparazione.md)).
-- `user X is not in the plugdev group` è il messaggio generico di adb quando non riesce ad aprire il
-  nodo: quasi sempre sono i permessi udev, non il gruppo.
+- In **download** mode the tablet is not an Android device: `adb` cannot see it, that is normal.
+- After installing LineageOS it **does not expose a serial over USB**: a udev rule keyed on the serial
+  no longer matches. Use VID-based rules (`1782` and `18d1`, see
+  [`01-preparation.md`](01-preparation.md)).
+- `user X is not in the plugdev group` is adb's generic message when it cannot open the node: almost
+  always udev permissions, not the group.

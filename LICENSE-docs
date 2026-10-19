@@ -1,14 +1,13 @@
-La documentazione di questo repository (README.md, FAQ.md, CHECKSUMS.md e tutto
-il contenuto di docs/) e' distribuita con licenza
+The documentation in this repository (README.md, FAQ.md, CHECKSUMS.md and everything
+under docs/) is licensed under
 
-    Creative Commons Attribuzione - Condividi allo stesso modo 4.0 Internazionale
-    (CC BY-SA 4.0)
+    Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 
-Testo integrale: https://creativecommons.org/licenses/by-sa/4.0/legalcode.it
+Full text: https://creativecommons.org/licenses/by-sa/4.0/legalcode
 
-In breve: puoi copiare, modificare e ridistribuire i testi, anche per uso
-commerciale, a condizione di citare la fonte e di distribuire le opere derivate
-con la stessa licenza.
+In short: you may copy, modify and redistribute the text, including commercially,
+as long as you give appropriate credit and distribute derivative works under the
+same license.
 
-Il codice (install.sh e gli script in scripts/) e' invece distribuito con
-licenza MIT: vedi il file LICENSE.
+The code (install.sh and anything under scripts/) is licensed under the MIT
+license instead: see the LICENSE file.
