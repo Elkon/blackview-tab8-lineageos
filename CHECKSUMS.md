@@ -35,18 +35,18 @@ is already publicly distributed: if you are the rights holder and want it remove
 The tarball contains its own `SHA256SUMS`, so it verifies itself: `sha256sum -c SHA256SUMS` after
 extracting.
 
-Every file is also downloadable **on its own**:
+Per-file hashes (for reference — all eight files are inside the tarball):
 
-| file | sha256 | link |
-|---|---|---|
-| `fdl1-dl.bin` | `bffd6edaf4ba07a57bc0db7ee96046bd772113de09ca308caf5537d660ddfbc5` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl1-dl.bin) |
-| `fdl2-cboot.bin` | `c619fdc146bf778c1a3d92475f88c87f95f1b2ecee4efaa2577fe06bfe3c5dcd` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl2-cboot.bin) |
-| `fdl2-dl.bin` | `ec087b5dfea37874cd81d5edbc689739f60299841f6fb5622065555dcbebf294` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl2-dl.bin) |
-| `misc-wipe.bin` | `bd6b67e852d6072e6fb87040f2ac40216d5b661b7fa661e7024569ecf8ddb3a7` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/misc-wipe.bin) |
-| `spl-unlock.bin` | `fa7f2fd297267c68492b31764ee5fd3461ff27b3d0240a32dc92a25d0af3ca83` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/spl-unlock.bin) |
-| `vbmeta-sign.img` | `b2eae2954847900dcc268b58f3348e45adb1656c255347448181431ec24876cc` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta-sign.img) |
-| `vbmeta_system.img` | `000570daf799b6c25d185e2940a3d7531f953822fe949f71d99a898a24076993` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta_system.img) |
-| `vbmeta_vendor.img` | `ccc565fa59049bf0df790162fc960451b935b11302f4971923b16e351eb6e947` | [download](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta_vendor.img) |
+| file | sha256 |
+|---|---|
+| `fdl1-dl.bin` | `bffd6edaf4ba07a57bc0db7ee96046bd772113de09ca308caf5537d660ddfbc5` |
+| `fdl2-cboot.bin` | `c619fdc146bf778c1a3d92475f88c87f95f1b2ecee4efaa2577fe06bfe3c5dcd` |
+| `fdl2-dl.bin` | `ec087b5dfea37874cd81d5edbc689739f60299841f6fb5622065555dcbebf294` |
+| `misc-wipe.bin` | `bd6b67e852d6072e6fb87040f2ac40216d5b661b7fa661e7024569ecf8ddb3a7` |
+| `spl-unlock.bin` | `fa7f2fd297267c68492b31764ee5fd3461ff27b3d0240a32dc92a25d0af3ca83` |
+| `vbmeta-sign.img` | `b2eae2954847900dcc268b58f3348e45adb1656c255347448181431ec24876cc` |
+| `vbmeta_system.img` | `000570daf799b6c25d185e2940a3d7531f953822fe949f71d99a898a24076993` |
+| `vbmeta_vendor.img` | `ccc565fa59049bf0df790162fc960451b935b11302f4971923b16e351eb6e947` |
 
 ## The rule
 

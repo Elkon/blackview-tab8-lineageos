@@ -1,7 +1,8 @@
 # artifacts/ — the unlock kit
 
-Extract `unlock-kit.tar.gz` (from the [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases))
-into `artifacts/unlock-kit/`. Every file is also available **individually** — see the table below.
+Download **[`unlock-kit.tar.gz`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/unlock-kit.tar.gz)**
+(716 KB) from the [Releases](https://github.com/Elkon/blackview-tab8-lineageos/releases) and extract it
+into `artifacts/unlock-kit/`.
 
 The installer expects `artifacts/unlock-kit/` to contain these eight files:
 
@@ -17,24 +18,26 @@ artifacts/unlock-kit/
 └── vbmeta_vendor.img
 ```
 
-## Individual files
+## What is inside
 
-Download link → `https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/<name>`
+| file | size | what it is |
+|---|---|---|
+| `fdl1-dl.bin` | 51 KB | FDL1 (first download stage), `data_exec` signature check neutralised |
+| `fdl2-dl.bin` | 700 KB | FDL2 (second stage) able to **write** protected partitions |
+| `fdl2-cboot.bin` | 700 KB | uboot with `do_cboot()` verification disabled — this is what goes into `uboot` |
+| `spl-unlock.bin` | 53 KB | the Tab 8 `splloader` with the signature checks patched out (73 `NOP`s) |
+| `misc-wipe.bin` | 2 KB | wipe command blob for the `misc` partition |
+| `vbmeta-sign.img` | 1 MB | stock `vbmeta`, patched at flash time with `--disable-verity --disable-verification` |
+| `vbmeta_system.img` | 4 KB | chained vbmeta for `system` — **this one matters most** |
+| `vbmeta_vendor.img` | 4 KB | chained vbmeta for `vendor` |
 
-| file | size | sha256 | what it is |
-|---|---|---|---|
-| [`fdl1-dl.bin`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl1-dl.bin) | 51 KB | `bffd6edaf4ba07a5c0e6f0a2a2a6f0bd7c3e5e4b2e1c9a8d7f6b5a4c3d2e1f0a` | FDL1 (first download stage), `data_exec` signature check neutralised |
-| [`fdl2-dl.bin`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl2-dl.bin) | 700 KB | `ec087b5dfea37874…` | FDL2 (second stage) able to **write** protected partitions |
-| [`fdl2-cboot.bin`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/fdl2-cboot.bin) | 700 KB | `c619fdc146bf778c…` | uboot with `do_cboot()` verification disabled — this is what goes into `uboot` |
-| [`spl-unlock.bin`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/spl-unlock.bin) | 53 KB | `fa7f2fd297267c68492b31764ee5fd3461ff27b3d0240a32dc92a25d0af3ca83` | the Tab 8 `splloader` with the signature checks patched out (73 `NOP`s) |
-| [`misc-wipe.bin`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/misc-wipe.bin) | 2 KB | `bd6b67e852d6072e…` | wipe command blob for the `misc` partition |
-| [`vbmeta-sign.img`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta-sign.img) | 1 MB | `b2eae2954847900d…` | stock `vbmeta`, patched at flash time with `--disable-verity --disable-verification` |
-| [`vbmeta_system.img`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta_system.img) | 4 KB | `000570daf799b6c2…` | chained vbmeta for `system` — **this one matters most** |
-| [`vbmeta_vendor.img`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/vbmeta_vendor.img) | 4 KB | `ccc565fa59049bf0…` | chained vbmeta for `vendor` |
+The exact hashes of all eight (and of the tarball) are in [`../CHECKSUMS.md`](../CHECKSUMS.md); the
+tarball also carries its own `SHA256SUMS`, so it verifies itself:
 
-Full hashes (all eight, plus the tarball) are in
-[`../CHECKSUMS.md`](../CHECKSUMS.md) and in the [`SHA256SUMS`](https://github.com/Elkon/blackview-tab8-lineageos/releases/download/v1.0.0/SHA256SUMS)
-asset — verify with `sha256sum -c SHA256SUMS`.
+```
+tar xzf unlock-kit.tar.gz -C artifacts/unlock-kit/
+cd artifacts/unlock-kit && sha256sum -c SHA256SUMS
+```
 
 **FDL base addresses** (read from the `.pac` XML, and matching the
 [official table](https://github.com/TomKing062/CVE-2022-38694_unlock_bootloader/wiki/AddSupportToModel)
